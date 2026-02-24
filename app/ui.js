@@ -1,10 +1,11 @@
 import { createSession, getSession } from "./session.js"
 import { generateQR } from "./qr.js"
 
+
 // ================= HOME =================
 export function renderHome(){
  document.getElementById("app").innerHTML=`
- <div class="container">
+ <div class="container-sm">
    <h2>Tạo phiên chia tiền</h2>
 
    <label>Ngân hàng</label>
@@ -35,11 +36,6 @@ export function renderHome(){
  }
 
  document.getElementById("createBtn").onclick=()=>{
-  const acc=document.getElementById("acc")
-  const name=document.getElementById("name")
-  const total=document.getElementById("total")
-  const count=document.getElementById("count")
-
   const id=createSession({
    bin: extractBIN(),
    acc: acc.value,
@@ -69,7 +65,7 @@ export function renderView(id){
  const each=Math.floor(data.total/data.count)
 
  let html=`
- <div class="container">
+ <div class="container-lg">
    <h2>Quét QR</h2>
    <p>Mỗi người: ${each.toLocaleString()} VND</p>
 
@@ -122,7 +118,7 @@ export function renderDashboard(){
  sessions.forEach(s=> totalMoney+=s.total)
 
  document.getElementById("app").innerHTML=`
- <div class="container">
+ <div class="container-lg">
    <h2>Dashboard</h2>
    <p>Tổng phiên: ${sessions.length}</p>
    <p>Tổng tiền: ${totalMoney.toLocaleString()} VND</p>
