@@ -68,21 +68,33 @@ export function renderView(id){
 
  const each=Math.floor(data.total/data.count)
 
- let html=`<div class="container">
- <h2>Quét QR</h2>
- <p>Mỗi người: ${each.toLocaleString()} VND</p>
+ let html=`
+ <div class="container">
+   <h2>Quét QR</h2>
+   <p>Mỗi người: ${each.toLocaleString()} VND</p>
+
+   <div class="qr-grid">
  `
 
  for(let i=1;i<=data.count;i++){
   html+=`
-   <div>
-    <p>Người ${i}</p>
-    <canvas id="qr${i}"></canvas>
+   <div class="qr-card">
+     <p>Người ${i}</p>
+     <canvas id="qr${i}"></canvas>
    </div>
   `
  }
 
- html+=`</div>`
+ html+=`
+   </div>
+
+   <button id="backBtn" class="secondary-btn">
+     ← Quay lại
+   </button>
+
+ </div>
+ `
+
  document.getElementById("app").innerHTML=html
 
  for(let i=1;i<=data.count;i++){
@@ -94,6 +106,10 @@ export function renderView(id){
    "NGUOI_"+i,
    "qr"+i
   )
+ }
+
+ document.getElementById("backBtn").onclick=()=>{
+   window.history.back()
  }
 }
 

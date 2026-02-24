@@ -125,3 +125,30 @@ hr{
     font-size:18px;
   }
 }
+.qr-grid{
+ display:grid;
+ grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+ gap:20px;
+ margin-top:20px;
+}
+
+.qr-card{
+ background:#111;
+ padding:15px;
+ border-radius:15px;
+ text-align:center;
+ box-shadow:0 0 20px rgba(255,215,0,0.15);
+}
+
+.qr-card canvas{
+ background:white;
+ padding:10px;
+ border-radius:12px;
+}
+
+.secondary-btn{
+ margin-top:30px;
+ background:#333;
+ color:#FFD700;
+ border:1px solid #FFD700;
+}
