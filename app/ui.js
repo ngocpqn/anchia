@@ -1,128 +1,193 @@
 import { createSession, getSession } from "./session.js"
 import { generateQR } from "./qr.js"
 
+/* ================= UTIL ================= */
 
-// ================= HOME =================
+function qs(id){
+  return document.getElementById(id)
+}
+
+function formatMoney(n){
+  return Number(n).toLocaleString("vi-VN")
+}
+
+function showError(message){
+  alert(message)
+}
+
+/* ================= HOME ================= */
+
 export function renderHome(){
- document.getElementById("app").innerHTML=`
- <div class="container-sm">
-   <h2>Tạo phiên chia tiền</h2>
 
-   <label>Ngân hàng</label>
-   <input 
-     id="bankInput"
-     list="bankList"
-     placeholder="Gõ tên hoặc mã BIN..."
-     autocomplete="off"
-     required
-   />
-   <datalist id="bankList"></datalist>
+  qs("app").innerHTML = `
+  <div class="container-sm">
+    <h2>Tạo phiên chia tiền</h2>
 
-   <input id="acc" placeholder="Số tài khoản">
-   <input id="name" placeholder="Tên chủ tài khoản">
-   <input id="total" type="number" placeholder="Tổng tiền">
-   <input id="count" type="number" value="5" placeholder="Số người">
+    <label>Ngân hàng</label>
+    <input id="bankInput" list="bankList"
+      placeholder="Gõ tên hoặc mã BIN..." autocomplete="off"/>
+    <datalist id="bankList"></datalist>
 
-   <button id="createBtn">Tạo phiên</button>
-   <hr>
-   <button id="dashboardBtn">Xem Dashboard</button>
- </div>
- `
+    <input id="acc" placeholder="Số tài khoản">
+    <input id="name" placeholder="Tên chủ tài khoản">
+    <input id="total" type="text" placeholder="Tổng tiền">
+    <input id="count" type="number" value="5" min="1">
 
- function extractBIN(){
-  const value = document.getElementById("bankInput").value
-  const match = value.match(/\d{6}$/)
-  return match ? match[0] : value
- }
+    <button id="createBtn" disabled>Tạo phiên</button>
+    <hr>
+    <button id="dashboardBtn">Xem Dashboard</button>
+  </div>
+  `
 
- document.getElementById("createBtn").onclick=()=>{
-  const id=createSession({
-   bin: extractBIN(),
-   acc: acc.value,
-   name: name.value.toUpperCase(),
-   total: Number(total.value),
-   count: Number(count.value)
+  const bankInput = qs("bankInput")
+  const accInput = qs("acc")
+  const nameInput = qs("name")
+  const totalInput = qs("total")
+  const countInput = qs("count")
+  const createBtn = qs("createBtn")
+
+  /* ===== Format tiền realtime ===== */
+  totalInput.addEventListener("input", e=>{
+    let value = e.target.value.replace(/\D/g,"")
+    if(!value) return e.target.value=""
+    e.target.value = formatMoney(value)
+    validateForm()
   })
 
-  window.location="?view="+id
- }
+  /* ===== Validate ===== */
+  function validateForm(){
+    const valid =
+      bankInput.value.trim() &&
+      accInput.value.trim() &&
+      nameInput.value.trim() &&
+      totalInput.value.trim() &&
+      Number(countInput.value) > 0
 
- document.getElementById("dashboardBtn").onclick=()=>{
-  window.location="?dashboard=1"
- }
+    createBtn.disabled = !valid
+  }
+
+  bankInput.oninput = validateForm
+  accInput.oninput = validateForm
+  nameInput.oninput = validateForm
+  countInput.oninput = validateForm
+
+  function extractBIN(){
+    const match = bankInput.value.match(/\d{6}$/)
+    return match ? match[0] : ""
+  }
+
+  /* ===== CREATE SESSION ===== */
+  createBtn.onclick = ()=>{
+    try{
+
+      createBtn.innerText = "Đang tạo..."
+      createBtn.disabled = true
+
+      const totalRaw = totalInput.value.replace(/\D/g,"")
+
+      const id = createSession({
+        bin: extractBIN(),
+        acc: accInput.value.trim(),
+        name: nameInput.value.trim().toUpperCase(),
+        total: Number(totalRaw),
+        count: Number(countInput.value)
+      })
+
+      window.location = "?view=" + id
+
+    }catch(err){
+      console.error(err)
+      showError("Có lỗi xảy ra khi tạo phiên")
+      createBtn.innerText = "Tạo phiên"
+      createBtn.disabled = false
+    }
+  }
+
+  qs("dashboardBtn").onclick = ()=>{
+    window.location="?dashboard=1"
+  }
 }
 
 
-// ================= VIEW =================
+/* ================= VIEW ================= */
+
 export function renderView(id){
- const data=getSession(id)
 
- if(!data){
-  document.getElementById("app").innerHTML="Không tìm thấy phiên"
-  return
- }
+  const data = getSession(id)
 
- const each=Math.floor(data.total/data.count)
+  if(!data){
+    qs("app").innerHTML = "<div class='container-lg'><h2>Không tìm thấy phiên</h2></div>"
+    return
+  }
 
- let html=`
- <div class="container-lg">
-   <h2>Quét QR</h2>
-   <p>Mỗi người: ${each.toLocaleString()} VND</p>
+  const each = Math.floor(data.total / data.count)
 
-   <div class="qr-grid">
- `
+  qs("app").innerHTML = `
+  <div class="container-lg">
+    <h2>Quét QR</h2>
+    <p>Mỗi người: ${formatMoney(each)} VND</p>
 
- for(let i=1;i<=data.count;i++){
-  html+=`
-   <div class="qr-card">
-     <p>Người ${i}</p>
-     <canvas id="qr${i}"></canvas>
-   </div>
+    <div class="qr-grid"></div>
+
+    <button id="backBtn" class="secondary-btn">
+      ← Quay lại
+    </button>
+  </div>
   `
- }
 
- html+=`
-   </div>
+  const grid = document.querySelector(".qr-grid")
 
-   <button id="backBtn" class="secondary-btn">
-     ← Quay lại
-   </button>
+  for(let i=1;i<=data.count;i++){
+    const card = document.createElement("div")
+    card.className = "qr-card"
+    card.innerHTML = `
+      <p>Người ${i}</p>
+      <canvas id="qr${i}"></canvas>
+    `
+    grid.appendChild(card)
 
- </div>
- `
+    generateQR(
+      data.bin,
+      data.acc,
+      data.name,
+      each,
+      "NGUOI_"+i,
+      "qr"+i
+    )
+  }
 
- document.getElementById("app").innerHTML=html
-
- for(let i=1;i<=data.count;i++){
-  generateQR(
-   data.bin,
-   data.acc,
-   data.name,
-   each,
-   "NGUOI_"+i,
-   "qr"+i
-  )
- }
-
- document.getElementById("backBtn").onclick=()=>{
-   window.history.back()
- }
+  qs("backBtn").onclick = ()=> window.history.back()
 }
 
 
-// ================= DASHBOARD =================
+/* ================= DASHBOARD ================= */
+
 export function renderDashboard(){
- const sessions=JSON.parse(localStorage.getItem("sessions")||"[]")
 
- let totalMoney=0
- sessions.forEach(s=> totalMoney+=s.total)
+  const sessions = JSON.parse(localStorage.getItem("sessions") || "[]")
 
- document.getElementById("app").innerHTML=`
- <div class="container-lg">
-   <h2>Dashboard</h2>
-   <p>Tổng phiên: ${sessions.length}</p>
-   <p>Tổng tiền: ${totalMoney.toLocaleString()} VND</p>
-   <button onclick="window.location='/'">Về trang chính</button>
- </div>
- `
+  let totalMoney = 0
+  sessions.forEach(s => totalMoney += s.total)
+
+  qs("app").innerHTML = `
+  <div class="container-lg">
+    <h2>Dashboard</h2>
+
+    <div class="stat-bar">
+      <div class="stat-card">
+        <h3>Tổng phiên</h3>
+        <strong>${sessions.length}</strong>
+      </div>
+
+      <div class="stat-card">
+        <h3>Tổng tiền</h3>
+        <strong>${formatMoney(totalMoney)} VND</strong>
+      </div>
+    </div>
+
+    <button id="homeBtn">Về trang chính</button>
+  </div>
+  `
+
+  qs("homeBtn").onclick = ()=> window.location="/"
 }
