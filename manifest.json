@@ -1,0 +1,15 @@
+{
+ "name":"Chia Tiền Nội Bộ",
+ "short_name":"ChiaTien",
+ "start_url":"/",
+ "display":"standalone",
+ "background_color":"#ffffff",
+ "theme_color":"#2f6fed",
+ "icons":[
+  {
+   "src":"https://cdn-icons-png.flaticon.com/512/3135/3135706.png",
+   "sizes":"192x192",
+   "type":"image/png"
+  }
+ ]
+}
