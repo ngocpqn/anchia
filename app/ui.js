@@ -1,5 +1,4 @@
 import { createSession, getSession } from "./session.js"
-import { generateQR } from "./qr.js"
 
 /* ================= UTIL ================= */
 
@@ -15,6 +14,11 @@ function showError(message){
   alert(message)
 }
 
+function buildVietQR(bin, acc, name, amount, note){
+  return `https://api.vietqr.io/image/${bin}-${acc}-compact2.png?amount=${amount}&addInfo=${note}&accountName=${encodeURIComponent(name)}`
+}
+
+
 /* ================= HOME ================= */
 
 export function renderHome(){
@@ -26,7 +30,6 @@ export function renderHome(){
     <label>Ngân hàng</label>
     <input id="bankInput" list="bankList"
       placeholder="Gõ tên hoặc mã BIN..." autocomplete="off"/>
-    <datalist id="bankList"></datalist>
 
     <input id="acc" placeholder="Số tài khoản">
     <input id="name" placeholder="Tên chủ tài khoản">
@@ -138,22 +141,22 @@ export function renderView(id){
   const grid = document.querySelector(".qr-grid")
 
   for(let i=1;i<=data.count;i++){
-    const card = document.createElement("div")
-    card.className = "qr-card"
-    card.innerHTML = `
-      <p>Người ${i}</p>
-      <canvas id="qr${i}"></canvas>
-    `
-    grid.appendChild(card)
 
-    generateQR(
+    const qrUrl = buildVietQR(
       data.bin,
       data.acc,
       data.name,
       each,
-      "NGUOI_"+i,
-      "qr"+i
+      "NGUOI_"+i
     )
+
+    const card = document.createElement("div")
+    card.className = "qr-card"
+    card.innerHTML = `
+      <p>Người ${i}</p>
+      <img src="${qrUrl}" style="width:100%;border-radius:14px"/>
+    `
+    grid.appendChild(card)
   }
 
   qs("backBtn").onclick = ()=> window.history.back()
