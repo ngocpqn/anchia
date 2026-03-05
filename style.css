@@ -1,4 +1,5 @@
 /* ================= RESET ================= */
+
 *{
   box-sizing:border-box;
   margin:0;
@@ -13,7 +14,9 @@ body{
   color:#fff;
 }
 
-/* ================= CONTAINER SMALL (HOME) ================= */
+
+/* ================= CONTAINERS ================= */
+
 .container-sm{
   width:100%;
   max-width:520px;
@@ -22,12 +25,12 @@ body{
   border-radius:22px;
   padding:30px;
   border:1px solid rgba(255,215,0,0.15);
+
   box-shadow:
-    0 0 40px rgba(255,215,0,0.15),
-    0 20px 60px rgba(0,0,0,0.6);
+  0 0 40px rgba(255,215,0,0.15),
+  0 20px 60px rgba(0,0,0,0.6);
 }
 
-/* ================= CONTAINER LARGE (QR & DASHBOARD) ================= */
 .container-lg{
   width:100%;
   max-width:1200px;
@@ -36,32 +39,41 @@ body{
   border-radius:22px;
   padding:40px;
   border:1px solid rgba(255,215,0,0.15);
+
   box-shadow:
-    0 0 60px rgba(255,215,0,0.12),
-    0 20px 60px rgba(0,0,0,0.6);
+  0 0 60px rgba(255,215,0,0.12),
+  0 20px 60px rgba(0,0,0,0.6);
 }
 
+
 /* ================= HEADINGS ================= */
+
 h2{
   text-align:center;
   margin-bottom:30px;
   font-weight:600;
   font-size:24px;
+
   background:linear-gradient(90deg,#FFD700,#FFB700);
   -webkit-background-clip:text;
   -webkit-text-fill-color:transparent;
 }
 
+
 /* ================= INPUT ================= */
+
 input{
   width:100%;
   padding:14px;
   margin-bottom:14px;
+
   border-radius:12px;
   border:1px solid rgba(255,215,0,0.25);
+
   background:#1a1a1a;
   color:#fff;
   font-size:14px;
+
   transition:0.3s;
 }
 
@@ -71,17 +83,23 @@ input:focus{
   box-shadow:0 0 12px rgba(255,215,0,0.5);
 }
 
+
 /* ================= BUTTON ================= */
+
 button{
   width:100%;
   padding:14px;
   margin-top:12px;
+
   border:none;
   border-radius:14px;
+
   font-weight:600;
   font-size:14px;
+
   cursor:pointer;
   transition:0.3s;
+
   background:linear-gradient(90deg,#FFD700,#FFB700);
   color:#000;
 }
@@ -91,11 +109,15 @@ button:hover{
   box-shadow:0 8px 25px rgba(255,215,0,0.4);
 }
 
-/* Secondary button */
+
+/* secondary button */
+
 .secondary-btn{
   margin-top:25px;
+
   background:#222;
   color:#FFD700;
+
   border:1px solid rgba(255,215,0,0.4);
 }
 
@@ -103,7 +125,9 @@ button:hover{
   background:#2a2a2a;
 }
 
+
 /* ================= TEXT ================= */
+
 p{
   text-align:center;
   margin:10px 0;
@@ -111,26 +135,41 @@ p{
   color:#ccc;
 }
 
-/* ================= DASHBOARD CARD ================= */
-.dashboard-card{
+
+/* ================= DASHBOARD ================= */
+
+.stat-bar{
+  display:flex;
+  gap:20px;
+  margin-bottom:30px;
+}
+
+.stat-card{
+  flex:1;
+
   background:#1a1a1a;
   padding:20px;
+
   border-radius:16px;
-  margin-bottom:18px;
   border:1px solid rgba(255,215,0,0.15);
-  transition:0.3s;
+
+  text-align:center;
 }
 
-.dashboard-card:hover{
-  transform:translateY(-5px);
-  box-shadow:0 12px 40px rgba(255,215,0,0.25);
+.stat-card h3{
+  font-size:14px;
+  margin-bottom:10px;
+  color:#aaa;
 }
 
-.dashboard-card strong{
+.stat-card strong{
+  font-size:22px;
   color:#FFD700;
 }
 
+
 /* ================= QR GRID ================= */
+
 .qr-grid{
   display:grid;
   gap:30px;
@@ -138,6 +177,7 @@ p{
 }
 
 /* Desktop */
+
 @media (min-width:1024px){
   .qr-grid{
     grid-template-columns:repeat(4,1fr);
@@ -145,6 +185,7 @@ p{
 }
 
 /* Tablet */
+
 @media (min-width:768px) and (max-width:1023px){
   .qr-grid{
     grid-template-columns:repeat(2,1fr);
@@ -152,19 +193,26 @@ p{
 }
 
 /* Mobile */
+
 @media (max-width:767px){
   .qr-grid{
     grid-template-columns:1fr;
   }
 }
 
+
 /* ================= QR CARD ================= */
+
 .qr-card{
   background:linear-gradient(145deg,#141414,#1d1d1d);
+
   padding:22px;
   border-radius:20px;
+
   text-align:center;
+
   border:1px solid rgba(255,215,0,0.2);
+
   transition:0.3s;
 }
 
@@ -173,14 +221,16 @@ p{
   box-shadow:0 12px 40px rgba(255,215,0,0.25);
 }
 
-.qr-card canvas{
+.qr-card img{
   margin-top:15px;
   background:#fff;
-  padding:14px;
+  padding:12px;
   border-radius:16px;
 }
 
+
 /* ================= DIVIDER ================= */
+
 hr{
   border:none;
   height:1px;
@@ -188,8 +238,111 @@ hr{
   margin:30px 0;
 }
 
+
+/* ================= BANK SELECT ================= */
+
+.bank-select{
+  position:relative;
+  margin-bottom:15px;
+}
+
+/* selected */
+
+.bank-selected{
+  background:#1a1a1a;
+  border:1px solid rgba(255,215,0,0.3);
+
+  padding:14px;
+  border-radius:12px;
+
+  cursor:pointer;
+
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.bank-selected-inner{
+  display:flex;
+  align-items:center;
+}
+
+.bank-selected img{
+  width:26px;
+  margin-right:10px;
+}
+
+
+/* dropdown */
+
+.bank-dropdown{
+  position:absolute;
+  width:100%;
+
+  background:#141414;
+
+  border:1px solid rgba(255,215,0,0.3);
+  border-radius:14px;
+
+  margin-top:8px;
+
+  z-index:1000;
+
+  max-height:260px;
+  overflow:hidden;
+
+  box-shadow:0 10px 30px rgba(0,0,0,0.6);
+}
+
+.bank-dropdown input{
+  width:100%;
+  padding:12px;
+
+  border:none;
+  background:#1a1a1a;
+  color:#fff;
+
+  border-bottom:1px solid rgba(255,215,0,0.2);
+}
+
+
+/* list */
+
+.bank-list{
+  max-height:200px;
+  overflow-y:auto;
+}
+
+.bank-item{
+  display:flex;
+  align-items:center;
+
+  padding:10px 14px;
+
+  cursor:pointer;
+}
+
+.bank-item img{
+  width:24px;
+  margin-right:10px;
+}
+
+.bank-item:hover{
+  background:rgba(255,215,0,0.1);
+}
+
+
+/* hidden */
+
+.hidden{
+  display:none;
+}
+
+
 /* ================= RESPONSIVE ================= */
+
 @media(max-width:480px){
+
   .container-sm,
   .container-lg{
     padding:22px;
@@ -198,15 +351,9 @@ hr{
   h2{
     font-size:20px;
   }
-}
-.container-sm{
-  max-width:520px;
-  width:100%;
-  margin:0 auto;
-}
 
-.container-lg{
-  max-width:1200px;
-  width:100%;
-  margin:0 auto;
+  .stat-bar{
+    flex-direction:column;
+  }
+
 }

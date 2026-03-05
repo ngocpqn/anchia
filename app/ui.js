@@ -16,7 +16,7 @@ function showError(message){
 }
 
 function buildVietQR(bin, acc, name, amount, note){
-  return `https://api.vietqr.io/image/${bin}-${acc}-compact2.png?amount=${amount}&addInfo=${note}&accountName=${encodeURIComponent(name)}`
+  return `https://api.vietqr.io/image/${bin}-${acc}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(note)}&accountName=${encodeURIComponent(name)}`
 }
 
 
@@ -45,9 +45,12 @@ export function renderHome(){
     <input id="name" placeholder="Tên chủ tài khoản">
     <input id="total" type="text" placeholder="Tổng tiền">
     <input id="count" type="number" value="5" min="1">
+    <input id="note" placeholder="Nội dung chuyển khoản (VD: an trua)">
 
     <button id="createBtn" disabled>Tạo phiên</button>
+
     <hr>
+
     <button id="dashboardBtn">Xem Dashboard</button>
   </div>
   `
@@ -64,6 +67,7 @@ export function renderHome(){
   const nameInput = qs("name")
   const totalInput = qs("total")
   const countInput = qs("count")
+  const noteInput = qs("note")
   const createBtn = qs("createBtn")
 
   /* ===== Render Bank List ===== */
@@ -76,21 +80,25 @@ export function renderHome(){
     )
 
     filtered.forEach(bank=>{
+
       const item = document.createElement("div")
       item.className="bank-item"
+
       item.innerHTML=`
-        <img src="https://api.vietqr.io/img/${bank.bin}.png">
+        <img src="https://img.vietqr.io/image/${bank.bin}.png" width="24">
         <span>${bank.name}</span>
       `
 
       item.onclick=()=>{
         selectedBank = bank
+
         selected.innerHTML=`
           <div class="bank-selected-inner">
-            <img src="https://api.vietqr.io/img/${bank.bin}.png">
+            <img src="https://img.vietqr.io/image/${bank.bin}.png" width="24">
             <span>${bank.name}</span>
           </div>
         `
+
         dropdown.classList.add("hidden")
         validateForm()
       }
@@ -101,6 +109,8 @@ export function renderHome(){
 
   renderBankList()
 
+  /* ===== Dropdown toggle ===== */
+
   selected.onclick=()=>{
     dropdown.classList.toggle("hidden")
     searchInput.focus()
@@ -110,23 +120,41 @@ export function renderHome(){
     renderBankList(e.target.value)
   }
 
+  /* ===== Click outside close ===== */
+
+  document.addEventListener("click",(e)=>{
+    if(!bankSelect.contains(e.target)){
+      dropdown.classList.add("hidden")
+    }
+  })
+
   /* ===== Format tiền realtime ===== */
 
   totalInput.addEventListener("input", e=>{
+
     let value = e.target.value.replace(/\D/g,"")
-    if(!value) return e.target.value=""
+
+    if(!value){
+      e.target.value=""
+      validateForm()
+      return
+    }
+
     e.target.value = formatMoney(value)
+
     validateForm()
   })
 
   /* ===== Validate ===== */
 
   function validateForm(){
+
     const valid =
       selectedBank &&
       accInput.value.trim() &&
       nameInput.value.trim() &&
       totalInput.value.trim() &&
+      noteInput.value.trim() &&
       Number(countInput.value) > 0
 
     createBtn.disabled = !valid
@@ -135,10 +163,12 @@ export function renderHome(){
   accInput.oninput = validateForm
   nameInput.oninput = validateForm
   countInput.oninput = validateForm
+  noteInput.oninput = validateForm
 
   /* ===== CREATE SESSION ===== */
 
   createBtn.onclick = ()=>{
+
     try{
 
       createBtn.innerText = "Đang tạo..."
@@ -147,21 +177,29 @@ export function renderHome(){
       const totalRaw = totalInput.value.replace(/\D/g,"")
 
       const id = createSession({
+
         bin: selectedBank.bin,
         acc: accInput.value.trim(),
         name: nameInput.value.trim().toUpperCase(),
         total: Number(totalRaw),
-        count: Number(countInput.value)
+        count: Number(countInput.value),
+        note: noteInput.value.trim()
+
       })
 
       window.location = "?view=" + id
 
     }catch(err){
+
       console.error(err)
+
       showError("Có lỗi xảy ra khi tạo phiên")
+
       createBtn.innerText = "Tạo phiên"
       createBtn.disabled = false
+
     }
+
   }
 
   qs("dashboardBtn").onclick = ()=>{
@@ -177,7 +215,13 @@ export function renderView(id){
   const data = getSession(id)
 
   if(!data){
-    qs("app").innerHTML = "<div class='container-lg'><h2>Không tìm thấy phiên</h2></div>"
+
+    qs("app").innerHTML = `
+      <div class="container-lg">
+        <h2>Không tìm thấy phiên</h2>
+      </div>
+    `
+
     return
   }
 
@@ -205,19 +249,23 @@ export function renderView(id){
       data.acc,
       data.name,
       each,
-      "NGUOI_"+i
+      `${data.note}_${i}`
     )
 
     const card = document.createElement("div")
-    card.className = "qr-card"
-    card.innerHTML = `
+    card.className="qr-card"
+
+    card.innerHTML=`
       <p>Người ${i}</p>
       <img src="${qrUrl}" style="width:100%;border-radius:14px"/>
     `
+
     grid.appendChild(card)
+
   }
 
   qs("backBtn").onclick = ()=> window.history.back()
+
 }
 
 
@@ -228,13 +276,17 @@ export function renderDashboard(){
   const sessions = JSON.parse(localStorage.getItem("sessions") || "[]")
 
   let totalMoney = 0
+
   sessions.forEach(s => totalMoney += s.total)
 
   qs("app").innerHTML = `
+
   <div class="container-lg">
+
     <h2>Dashboard</h2>
 
     <div class="stat-bar">
+
       <div class="stat-card">
         <h3>Tổng phiên</h3>
         <strong>${sessions.length}</strong>
@@ -244,11 +296,14 @@ export function renderDashboard(){
         <h3>Tổng tiền</h3>
         <strong>${formatMoney(totalMoney)} VND</strong>
       </div>
+
     </div>
 
     <button id="homeBtn">Về trang chính</button>
+
   </div>
   `
 
   qs("homeBtn").onclick = ()=> window.location="/"
+
 }
