@@ -1,4 +1,5 @@
 import { createSession, getSession } from "./session.js"
+import { BANKS } from "./banks.js"
 
 /* ================= UTIL ================= */
 
@@ -28,8 +29,17 @@ export function renderHome(){
     <h2>Tạo phiên chia tiền</h2>
 
     <label>Ngân hàng</label>
-    <input id="bankInput" list="bankList"
-      placeholder="Gõ tên hoặc mã BIN..." autocomplete="off"/>
+    <div class="bank-select" id="bankSelect">
+      <div class="bank-selected" id="bankSelected">
+        <span>Chọn ngân hàng</span>
+        <span>▼</span>
+      </div>
+
+      <div class="bank-dropdown hidden">
+        <input type="text" id="bankSearch" placeholder="Tìm ngân hàng...">
+        <div class="bank-list"></div>
+      </div>
+    </div>
 
     <input id="acc" placeholder="Số tài khoản">
     <input id="name" placeholder="Tên chủ tài khoản">
@@ -42,14 +52,66 @@ export function renderHome(){
   </div>
   `
 
-  const bankInput = qs("bankInput")
+  let selectedBank = null
+
+  const bankSelect = qs("bankSelect")
+  const selected = bankSelect.querySelector(".bank-selected")
+  const dropdown = bankSelect.querySelector(".bank-dropdown")
+  const searchInput = bankSelect.querySelector("#bankSearch")
+  const listContainer = bankSelect.querySelector(".bank-list")
+
   const accInput = qs("acc")
   const nameInput = qs("name")
   const totalInput = qs("total")
   const countInput = qs("count")
   const createBtn = qs("createBtn")
 
+  /* ===== Render Bank List ===== */
+
+  function renderBankList(filter=""){
+    listContainer.innerHTML=""
+
+    const filtered = BANKS.filter(b =>
+      b.name.toLowerCase().includes(filter.toLowerCase())
+    )
+
+    filtered.forEach(bank=>{
+      const item = document.createElement("div")
+      item.className="bank-item"
+      item.innerHTML=`
+        <img src="https://api.vietqr.io/img/${bank.bin}.png">
+        <span>${bank.name}</span>
+      `
+
+      item.onclick=()=>{
+        selectedBank = bank
+        selected.innerHTML=`
+          <div class="bank-selected-inner">
+            <img src="https://api.vietqr.io/img/${bank.bin}.png">
+            <span>${bank.name}</span>
+          </div>
+        `
+        dropdown.classList.add("hidden")
+        validateForm()
+      }
+
+      listContainer.appendChild(item)
+    })
+  }
+
+  renderBankList()
+
+  selected.onclick=()=>{
+    dropdown.classList.toggle("hidden")
+    searchInput.focus()
+  }
+
+  searchInput.oninput=e=>{
+    renderBankList(e.target.value)
+  }
+
   /* ===== Format tiền realtime ===== */
+
   totalInput.addEventListener("input", e=>{
     let value = e.target.value.replace(/\D/g,"")
     if(!value) return e.target.value=""
@@ -58,9 +120,10 @@ export function renderHome(){
   })
 
   /* ===== Validate ===== */
+
   function validateForm(){
     const valid =
-      bankInput.value.trim() &&
+      selectedBank &&
       accInput.value.trim() &&
       nameInput.value.trim() &&
       totalInput.value.trim() &&
@@ -69,17 +132,12 @@ export function renderHome(){
     createBtn.disabled = !valid
   }
 
-  bankInput.oninput = validateForm
   accInput.oninput = validateForm
   nameInput.oninput = validateForm
   countInput.oninput = validateForm
 
-  function extractBIN(){
-    const match = bankInput.value.match(/\d{6}$/)
-    return match ? match[0] : ""
-  }
-
   /* ===== CREATE SESSION ===== */
+
   createBtn.onclick = ()=>{
     try{
 
@@ -89,7 +147,7 @@ export function renderHome(){
       const totalRaw = totalInput.value.replace(/\D/g,"")
 
       const id = createSession({
-        bin: extractBIN(),
+        bin: selectedBank.bin,
         acc: accInput.value.trim(),
         name: nameInput.value.trim().toUpperCase(),
         total: Number(totalRaw),
