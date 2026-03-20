@@ -97,7 +97,7 @@ export function renderHome(){
       item.className="bank-item"
 
       item.innerHTML = `
-        <img src="https://img.vietqr.io/image/${bank.bin}.png" width="24">
+        <img src="${bank.logo}" width="24">
         <span>${bank.name}</span>
       `
 
@@ -107,7 +107,7 @@ export function renderHome(){
 
         selected.innerHTML = `
           <div class="bank-selected-inner">
-            <img src="https://img.vietqr.io/image/${bank.bin}.png" width="24">
+            <img src="${bank.logo}" width="24">
             <span>${bank.name}</span>
           </div>
         `
