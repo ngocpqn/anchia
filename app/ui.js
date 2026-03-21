@@ -3,12 +3,21 @@ import { BANKS } from "./banks.js"
 
 /* ================= UTIL ================= */
 
-const qs = id => document.getElementById(id)
+function qs(id){
+  return document.getElementById(id)
+}
 
-const formatMoney = n => Number(n).toLocaleString("vi-VN")
+function formatMoney(n){
+  return Number(n).toLocaleString("vi-VN")
+}
 
-const buildVietQR = (bin, acc, name, amount, note) =>
-  `https://img.vietqr.io/image/${bin}-${acc}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(note)}&accountName=${encodeURIComponent(name)}`
+function showError(message){
+  alert(message)
+}
+
+function buildVietQR(bin, acc, name, amount, note){
+  return `https://api.vietqr.io/image/${bin}-${acc}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(note)}&accountName=${encodeURIComponent(name)}`
+}
 
 
 /* ================= HOME ================= */
@@ -30,17 +39,20 @@ export function renderHome(){
       </div>
 
       <div class="bank-dropdown hidden">
+
         <input type="text" id="bankSearch" placeholder="Tìm ngân hàng...">
+
         <div class="bank-list"></div>
+
       </div>
 
     </div>
 
     <input id="acc" placeholder="Số tài khoản">
     <input id="name" placeholder="Tên chủ tài khoản">
-    <input id="total" placeholder="Tổng tiền">
+    <input id="total" type="text" placeholder="Tổng tiền">
     <input id="count" type="number" value="5" min="1">
-    <input id="note" placeholder="Nội dung chuyển khoản">
+    <input id="note" placeholder="Nội dung chuyển khoản (VD: an trua)">
 
     <button id="createBtn" disabled>Tạo phiên</button>
 
@@ -56,118 +68,192 @@ export function renderHome(){
   const bankSelect = qs("bankSelect")
   const selected = bankSelect.querySelector(".bank-selected")
   const dropdown = bankSelect.querySelector(".bank-dropdown")
-  const searchInput = qs("bankSearch")
-  const list = bankSelect.querySelector(".bank-list")
+  const searchInput = bankSelect.querySelector("#bankSearch")
+  const listContainer = bankSelect.querySelector(".bank-list")
 
-  const acc = qs("acc")
-  const name = qs("name")
-  const total = qs("total")
-  const count = qs("count")
-  const note = qs("note")
-  const btn = qs("createBtn")
+  const accInput = qs("acc")
+  const nameInput = qs("name")
+  const totalInput = qs("total")
+  const countInput = qs("count")
+  const noteInput = qs("note")
+  const createBtn = qs("createBtn")
 
-  /* ===== BANK LIST ===== */
 
-  function renderBanks(filter=""){
-    list.innerHTML = ""
 
-    BANKS
-      .filter(b => b.name.toLowerCase().includes(filter.toLowerCase()))
-      .forEach(bank => {
+  /* ================= RENDER BANK LIST ================= */
 
-        const el = document.createElement("div")
-        el.className = "bank-item"
+  function renderBankList(filter=""){
 
-        el.innerHTML = `
-          <img src="https://img.vietqr.io/image/${bank.bin}.png"
-               onerror="this.src='https://via.placeholder.com/24'">
-          <span>${bank.name}</span>
+    listContainer.innerHTML=""
+
+    const filtered = BANKS.filter(b =>
+      b.name.toLowerCase().includes(filter.toLowerCase())
+    )
+
+    filtered.forEach(bank=>{
+
+      const item = document.createElement("div")
+
+      item.className="bank-item"
+
+      item.innerHTML = `
+        <img src="${bank.bin}" width="24">
+        <span>${bank.name}</span>
+      `
+
+      item.onclick = ()=>{
+
+        selectedBank = bank
+
+        selected.innerHTML = `
+          <div class="bank-selected-inner">
+            <img src="${bank.bin}" width="24">
+            <span>${bank.name}</span>
+          </div>
         `
 
-        el.onclick = () => {
-          selectedBank = bank
+        dropdown.classList.add("hidden")
 
-          selected.innerHTML = `
-            <div class="bank-selected-inner">
-              <img src="https://img.vietqr.io/image/${bank.bin}.png">
-              <span>${bank.name}</span>
-            </div>
-          `
+        validateForm()
 
-          dropdown.classList.add("hidden")
-          validate()
-        }
+      }
 
-        list.appendChild(el)
-      })
+      listContainer.appendChild(item)
+
+    })
+
   }
 
-  renderBanks()
+  renderBankList()
 
-  selected.onclick = () => {
+
+
+  /* ================= DROPDOWN ================= */
+
+  selected.onclick = ()=>{
+
     dropdown.classList.toggle("hidden")
+
     searchInput.focus()
+
   }
 
-  searchInput.oninput = e => renderBanks(e.target.value)
+  searchInput.oninput = (e)=>{
 
-  document.addEventListener("click", e=>{
-    if(!bankSelect.contains(e.target)) dropdown.classList.add("hidden")
+    renderBankList(e.target.value)
+
+  }
+
+
+
+  /* ================= CLOSE DROPDOWN ================= */
+
+  document.addEventListener("click",(e)=>{
+
+    if(!bankSelect.contains(e.target)){
+
+      dropdown.classList.add("hidden")
+
+    }
+
   })
 
-  /* ===== FORMAT MONEY ===== */
 
-  total.oninput = e=>{
-    let v = e.target.value.replace(/\D/g,"")
-    e.target.value = v ? formatMoney(v) : ""
-    validate()
-  }
 
-  /* ===== VALIDATE ===== */
+  /* ================= FORMAT MONEY ================= */
 
-  function validate(){
-    btn.disabled = !(
+  totalInput.addEventListener("input", e=>{
+
+    let value = e.target.value.replace(/\D/g,"")
+
+    if(!value){
+
+      e.target.value=""
+      validateForm()
+
+      return
+
+    }
+
+    e.target.value = formatMoney(value)
+
+    validateForm()
+
+  })
+
+
+
+  /* ================= VALIDATE ================= */
+
+  function validateForm(){
+
+    const valid =
+
       selectedBank &&
-      acc.value &&
-      name.value &&
-      total.value &&
-      note.value &&
-      Number(count.value) > 0
-    )
+      accInput.value.trim() &&
+      nameInput.value.trim() &&
+      totalInput.value.trim() &&
+      noteInput.value.trim() &&
+      Number(countInput.value) > 0
+
+    createBtn.disabled = !valid
+
   }
 
-  acc.oninput = validate
-  name.oninput = validate
-  count.oninput = validate
-  note.oninput = validate
+  accInput.oninput = validateForm
+  nameInput.oninput = validateForm
+  countInput.oninput = validateForm
+  noteInput.oninput = validateForm
 
-  /* ===== CREATE ===== */
 
-  btn.onclick = ()=>{
+
+  /* ================= CREATE SESSION ================= */
+
+  createBtn.onclick = ()=>{
+
     try{
-      btn.innerText = "Đang tạo..."
-      btn.disabled = true
+
+      createBtn.innerText="Đang tạo..."
+      createBtn.disabled=true
+
+      const totalRaw = totalInput.value.replace(/\D/g,"")
 
       const id = createSession({
+
         bin: selectedBank.bin,
-        acc: acc.value.trim(),
-        name: name.value.trim().toUpperCase(),
-        total: Number(total.value.replace(/\D/g,"")),
-        count: Number(count.value),
-        note: note.value.trim()
+        acc: accInput.value.trim(),
+        name: nameInput.value.trim().toUpperCase(),
+        total: Number(totalRaw),
+        count: Number(countInput.value),
+        note: noteInput.value.trim()
+
       })
 
-      window.location = "?view=" + id
+      window.location="?view="+id
 
-    }catch{
-      alert("Lỗi tạo phiên")
-      btn.innerText = "Tạo phiên"
-      btn.disabled = false
     }
+
+    catch(err){
+
+      console.error(err)
+
+      showError("Có lỗi xảy ra")
+
+      createBtn.innerText="Tạo phiên"
+      createBtn.disabled=false
+
+    }
+
   }
 
-  qs("dashboardBtn").onclick = ()=> window.location="?dashboard=1"
+  qs("dashboardBtn").onclick = ()=>{
+
+    window.location="?dashboard=1"
+
+  }
+
 }
+
 
 
 /* ================= VIEW ================= */
@@ -177,69 +263,110 @@ export function renderView(id){
   const data = getSession(id)
 
   if(!data){
-    qs("app").innerHTML = `<div class="container-lg"><h2>Không tìm thấy</h2></div>`
+
+    qs("app").innerHTML=`
+      <div class="container-lg">
+        <h2>Không tìm thấy phiên</h2>
+      </div>
+    `
+
     return
+
   }
 
   const each = Math.floor(data.total / data.count)
 
-  qs("app").innerHTML = `
+  qs("app").innerHTML=`
+
   <div class="container-lg">
 
     <h2>Quét QR</h2>
-    <p>${formatMoney(each)} VND / người</p>
+
+    <p>Mỗi người: ${formatMoney(each)} VND</p>
 
     <div class="qr-grid"></div>
 
-    <button id="backBtn" class="secondary-btn">← Quay lại</button>
+    <button id="backBtn" class="secondary-btn">
+
+      ← Quay lại
+
+    </button>
 
   </div>
   `
 
   const grid = document.querySelector(".qr-grid")
 
+
+
   for(let i=1;i<=data.count;i++){
 
-    const url = buildVietQR(
+    const qrUrl = buildVietQR(
+
       data.bin,
       data.acc,
       data.name,
       each,
-      data.note   // ✅ KHÔNG GHÉP _i
+      data.note
+
     )
 
     const card = document.createElement("div")
-    card.className = "qr-card"
+
+    card.className="qr-card"
 
     card.innerHTML = `
+
       <p>Người ${i}</p>
-      <img class="qr-img" src="${url}">
+
+      <img class="qr-img" src="${qrUrl}">
+
     `
 
     grid.appendChild(card)
 
-    card.querySelector(".qr-img").onclick = ()=> openModal(url)
+
+
+    card.querySelector(".qr-img").onclick = ()=>{
+
+      openQRModal(qrUrl)
+
+    }
+
   }
 
-  qs("backBtn").onclick = ()=> history.back()
+
+
+  qs("backBtn").onclick = ()=> window.history.back()
+
 }
 
 
-/* ================= MODAL ================= */
 
-function openModal(src){
-  const m = document.createElement("div")
-  m.className = "qr-modal"
+/* ================= QR MODAL ================= */
 
-  m.innerHTML = `
+function openQRModal(src){
+
+  const modal = document.createElement("div")
+
+  modal.className="qr-modal"
+
+  modal.innerHTML=`
+
     <div class="qr-modal-box">
+
       <img src="${src}">
+
     </div>
+
   `
 
-  m.onclick = ()=> m.remove()
-  document.body.appendChild(m)
+  modal.onclick=()=> modal.remove()
+
+  document.body.appendChild(modal)
+
 }
+
 
 
 /* ================= DASHBOARD ================= */
@@ -248,27 +375,41 @@ export function renderDashboard(){
 
   const sessions = JSON.parse(localStorage.getItem("sessions") || "[]")
 
-  const total = sessions.reduce((s,x)=>s+x.total,0)
+  let totalMoney=0
 
-  qs("app").innerHTML = `
+  sessions.forEach(s=> totalMoney += s.total)
+
+  qs("app").innerHTML=`
+
   <div class="container-lg">
 
     <h2>Dashboard</h2>
 
     <div class="stat-bar">
+
       <div class="stat-card">
-        <h3>Số phiên</h3>
+
+        <h3>Tổng phiên</h3>
+
         <strong>${sessions.length}</strong>
+
       </div>
 
       <div class="stat-card">
+
         <h3>Tổng tiền</h3>
-        <strong>${formatMoney(total)} VND</strong>
+
+        <strong>${formatMoney(totalMoney)} VND</strong>
+
       </div>
+
     </div>
 
-    <button onclick="location='/'">Trang chủ</button>
+    <button id="homeBtn">Về trang chính</button>
 
   </div>
   `
+
+  qs("homeBtn").onclick=()=> window.location="/"
+
 }
