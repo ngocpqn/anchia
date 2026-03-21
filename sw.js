@@ -1,9 +1,11 @@
 self.addEventListener("install",e=>{
  e.waitUntil(
   caches.open("app").then(c=>c.addAll([
-   "/",
-   "/index.html",
-   "/style.css"
+  "/",
+  "/index.html",
+  "/style.css",
+  "/app/ui.js",
+  "/app/main.js"
   ]))
  )
 })
