@@ -1,4 +1,5 @@
 export const BANKS = [
+{ name: "MB Bank", bin: "970422", code: "mb" }
 { name:"MB Bank", bin:"970422", logo:"icons/mb.png" },
 { name:"Vietcombank", bin:"970436", logo:"icons/vietcombank.png" },
 { name:"Techcombank", bin:"970407", logo:"icons/techcombank.png" },

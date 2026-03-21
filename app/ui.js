@@ -19,6 +19,17 @@ function buildVietQR(bin, acc, name, amount, note){
   return `https://api.vietqr.io/image/${bin}-${acc}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(note)}&accountName=${encodeURIComponent(name)}`
 }
 
+// ✅ FIX ICON (code → fallback bin)
+function getBankIcon(bank){
+  return `
+    <img 
+      src="https://vietqr.co/storage/banks/${bank.code}.png"
+      onerror="this.onerror=null;this.src='https://img.vietqr.io/image/${bank.bin}.png'"
+      width="24"
+    >
+  `
+}
+
 
 /* ================= HOME ================= */
 
@@ -52,7 +63,7 @@ export function renderHome(){
     <input id="name" placeholder="Tên chủ tài khoản">
     <input id="total" type="text" placeholder="Tổng tiền">
     <input id="count" type="number" value="5" min="1">
-    <input id="note" placeholder="Nội dung chuyển khoản (VD: an trua)">
+    <input id="note" placeholder="Nội dung chuyển khoản (VD: ăn trưa)">
 
     <button id="createBtn" disabled>Tạo phiên</button>
 
@@ -79,8 +90,7 @@ export function renderHome(){
   const createBtn = qs("createBtn")
 
 
-
-  /* ================= RENDER BANK LIST ================= */
+  /* ================= RENDER BANK ================= */
 
   function renderBankList(filter=""){
 
@@ -93,11 +103,10 @@ export function renderHome(){
     filtered.forEach(bank=>{
 
       const item = document.createElement("div")
-
       item.className="bank-item"
 
       item.innerHTML = `
-        <img src="${bank.bin}" width="24">
+        ${getBankIcon(bank)}
         <span>${bank.name}</span>
       `
 
@@ -107,80 +116,54 @@ export function renderHome(){
 
         selected.innerHTML = `
           <div class="bank-selected-inner">
-            <img src="${bank.bin}" width="24">
+            ${getBankIcon(bank)}
             <span>${bank.name}</span>
           </div>
         `
 
         dropdown.classList.add("hidden")
-
         validateForm()
-
       }
 
       listContainer.appendChild(item)
-
     })
-
   }
 
   renderBankList()
 
 
-
   /* ================= DROPDOWN ================= */
 
   selected.onclick = ()=>{
-
     dropdown.classList.toggle("hidden")
-
     searchInput.focus()
-
   }
 
   searchInput.oninput = (e)=>{
-
     renderBankList(e.target.value)
-
   }
 
-
-
-  /* ================= CLOSE DROPDOWN ================= */
-
   document.addEventListener("click",(e)=>{
-
     if(!bankSelect.contains(e.target)){
-
       dropdown.classList.add("hidden")
-
     }
-
   })
-
 
 
   /* ================= FORMAT MONEY ================= */
 
   totalInput.addEventListener("input", e=>{
-
     let value = e.target.value.replace(/\D/g,"")
 
     if(!value){
-
       e.target.value=""
       validateForm()
-
       return
-
     }
 
     e.target.value = formatMoney(value)
-
     validateForm()
-
   })
-
 
 
   /* ================= VALIDATE ================= */
@@ -188,7 +171,6 @@ export function renderHome(){
   function validateForm(){
 
     const valid =
-
       selectedBank &&
       accInput.value.trim() &&
       nameInput.value.trim() &&
@@ -197,7 +179,6 @@ export function renderHome(){
       Number(countInput.value) > 0
 
     createBtn.disabled = !valid
-
   }
 
   accInput.oninput = validateForm
@@ -206,8 +187,7 @@ export function renderHome(){
   noteInput.oninput = validateForm
 
 
-
-  /* ================= CREATE SESSION ================= */
+  /* ================= CREATE ================= */
 
   createBtn.onclick = ()=>{
 
@@ -219,41 +199,30 @@ export function renderHome(){
       const totalRaw = totalInput.value.replace(/\D/g,"")
 
       const id = createSession({
-
         bin: selectedBank.bin,
         acc: accInput.value.trim(),
         name: nameInput.value.trim().toUpperCase(),
         total: Number(totalRaw),
         count: Number(countInput.value),
         note: noteInput.value.trim()
-
       })
 
       window.location="?view="+id
 
-    }
-
-    catch(err){
+    }catch(err){
 
       console.error(err)
-
       showError("Có lỗi xảy ra")
 
       createBtn.innerText="Tạo phiên"
       createBtn.disabled=false
-
     }
-
   }
 
   qs("dashboardBtn").onclick = ()=>{
-
     window.location="?dashboard=1"
-
   }
-
 }
-
 
 
 /* ================= VIEW ================= */
@@ -263,21 +232,17 @@ export function renderView(id){
   const data = getSession(id)
 
   if(!data){
-
-    qs("app").innerHTML=`
+    qs("app").innerHTML = `
       <div class="container-lg">
         <h2>Không tìm thấy phiên</h2>
       </div>
     `
-
     return
-
   }
 
   const each = Math.floor(data.total / data.count)
 
-  qs("app").innerHTML=`
-
+  qs("app").innerHTML = `
   <div class="container-lg">
 
     <h2>Quét QR</h2>
@@ -287,9 +252,7 @@ export function renderView(id){
     <div class="qr-grid"></div>
 
     <button id="backBtn" class="secondary-btn">
-
       ← Quay lại
-
     </button>
 
   </div>
@@ -297,50 +260,33 @@ export function renderView(id){
 
   const grid = document.querySelector(".qr-grid")
 
-
-
   for(let i=1;i<=data.count;i++){
 
     const qrUrl = buildVietQR(
-
       data.bin,
       data.acc,
       data.name,
       each,
-      data.note
-
+      data.note // ✅ KHÔNG còn _1
     )
 
     const card = document.createElement("div")
-
     card.className="qr-card"
 
     card.innerHTML = `
-
       <p>Người ${i}</p>
-
       <img class="qr-img" src="${qrUrl}">
-
     `
 
     grid.appendChild(card)
 
-
-
     card.querySelector(".qr-img").onclick = ()=>{
-
       openQRModal(qrUrl)
-
     }
-
   }
 
-
-
   qs("backBtn").onclick = ()=> window.history.back()
-
 }
-
 
 
 /* ================= QR MODAL ================= */
@@ -348,25 +294,18 @@ export function renderView(id){
 function openQRModal(src){
 
   const modal = document.createElement("div")
-
   modal.className="qr-modal"
 
   modal.innerHTML=`
-
     <div class="qr-modal-box">
-
       <img src="${src}">
-
     </div>
-
   `
 
   modal.onclick=()=> modal.remove()
 
   document.body.appendChild(modal)
-
 }
-
 
 
 /* ================= DASHBOARD ================= */
@@ -376,11 +315,9 @@ export function renderDashboard(){
   const sessions = JSON.parse(localStorage.getItem("sessions") || "[]")
 
   let totalMoney=0
-
   sessions.forEach(s=> totalMoney += s.total)
 
   qs("app").innerHTML=`
-
   <div class="container-lg">
 
     <h2>Dashboard</h2>
@@ -388,19 +325,13 @@ export function renderDashboard(){
     <div class="stat-bar">
 
       <div class="stat-card">
-
         <h3>Tổng phiên</h3>
-
         <strong>${sessions.length}</strong>
-
       </div>
 
       <div class="stat-card">
-
         <h3>Tổng tiền</h3>
-
         <strong>${formatMoney(totalMoney)} VND</strong>
-
       </div>
 
     </div>
@@ -411,5 +342,4 @@ export function renderDashboard(){
   `
 
   qs("homeBtn").onclick=()=> window.location="/"
-
 }
