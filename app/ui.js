@@ -24,11 +24,13 @@ export function renderDashboard(){
 
     <!-- Sidebar -->
     <aside class="main-sidebar sidebar-dark-primary elevation-4">
+
       <a class="brand-link">
         <span class="brand-text font-weight-light">Admin Panel</span>
       </a>
 
       <div class="sidebar">
+
         <div class="user-panel mt-3 pb-3 mb-3">
           <div class="info">
             <a class="d-block">Administrator</a>
@@ -54,6 +56,7 @@ export function renderDashboard(){
 
           </ul>
         </nav>
+
       </div>
     </aside>
 
@@ -75,7 +78,7 @@ export function renderDashboard(){
               <div class="small-box bg-info">
                 <div class="inner">
                   <h3>${sessions.length}</h3>
-                  <p>Tổng phiên</p>
+                  <p>Đơn hàng mới</p>
                 </div>
               </div>
             </div>
@@ -83,8 +86,8 @@ export function renderDashboard(){
             <div class="col-lg-3 col-6">
               <div class="small-box bg-success">
                 <div class="inner">
-                  <h3>${totalMoney.toLocaleString()}</h3>
-                  <p>Tổng tiền</p>
+                  <h3>53%</h3>
+                  <p>Tăng trưởng</p>
                 </div>
               </div>
             </div>
@@ -92,7 +95,7 @@ export function renderDashboard(){
             <div class="col-lg-3 col-6">
               <div class="small-box bg-warning">
                 <div class="inner">
-                  <h3>44</h3>
+                  <h3>${sessions.length}</h3>
                   <p>Người dùng</p>
                 </div>
               </div>
@@ -101,8 +104,8 @@ export function renderDashboard(){
             <div class="col-lg-3 col-6">
               <div class="small-box bg-danger">
                 <div class="inner">
-                  <h3>65</h3>
-                  <p>Lượt truy cập</p>
+                  <h3>${totalMoney.toLocaleString()}</h3>
+                  <p>Doanh thu</p>
                 </div>
               </div>
             </div>
@@ -129,16 +132,15 @@ export function renderDashboard(){
   // Chart
   const ctx = document.getElementById('chart')
 
-  if(ctx){
-    new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: ['T1','T2','T3','T4'],
-        datasets: [{
-          label: 'Doanh thu',
-          data: [100,200,150,300]
-        }]
-      }
-    })
-  }
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ['T1','T2','T3','T4','T5'],
+      datasets: [{
+        label: 'Doanh thu',
+        data: [100,200,150,300,250],
+        borderWidth: 2
+      }]
+    }
+  })
 }

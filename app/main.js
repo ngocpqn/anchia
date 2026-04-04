@@ -16,11 +16,14 @@ function loadBanks(){
   })
 }
 
-if(params.get("view")){
- renderView(params.get("view"))
-}
-else if(params.get("dashboard")){
+if(params.get("dashboard")){
+ document.body.className = "hold-transition sidebar-mini"
  renderDashboard()
+}
+else{
+ document.body.className = ""   // dùng UI cũ
+ renderHome()
+ loadBanks()
 }
 else{
  renderHome()
