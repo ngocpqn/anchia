@@ -1,345 +1,144 @@
-import { createSession, getSession } from "./session.js"
-import { BANKS } from "./banks.js"
-
-/* ================= UTIL ================= */
-
-function qs(id){
-  return document.getElementById(id)
-}
-
-function formatMoney(n){
-  return Number(n).toLocaleString("vi-VN")
-}
-
-function showError(message){
-  alert(message)
-}
-
-function buildVietQR(bin, acc, name, amount, note){
-  return `https://api.vietqr.io/image/${bin}-${acc}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(note)}&accountName=${encodeURIComponent(name)}`
-}
-
-// ✅ FIX ICON (code → fallback bin)
-function getBankIcon(bank){
-  return `
-    <img 
-      src="https://vietqr.co/storage/banks/${bank.code}.png"
-      onerror="this.onerror=null;this.src='https://img.vietqr.io/image/${bank.bin}.png'"
-      width="24"
-    >
-  `
-}
-
-
-/* ================= HOME ================= */
-
-export function renderHome(){
-
-  qs("app").innerHTML = `
-  <div class="container-sm">
-
-    <h2>Tạo phiên chia tiền</h2>
-
-    <label>Ngân hàng</label>
-
-    <div class="bank-select" id="bankSelect">
-
-      <div class="bank-selected">
-        <span>Chọn ngân hàng</span>
-        <span>▼</span>
-      </div>
-
-      <div class="bank-dropdown hidden">
-
-        <input type="text" id="bankSearch" placeholder="Tìm ngân hàng...">
-
-        <div class="bank-list"></div>
-
-      </div>
-
-    </div>
-
-    <input id="acc" placeholder="Số tài khoản">
-    <input id="name" placeholder="Tên chủ tài khoản">
-    <input id="total" type="text" placeholder="Tổng tiền">
-    <input id="count" type="number" value="5" min="1">
-    <input id="note" placeholder="Nội dung chuyển khoản (VD: ăn trưa)">
-
-    <button id="createBtn" disabled>Tạo phiên</button>
-
-    <hr>
-
-    <button id="dashboardBtn">Xem Dashboard</button>
-
-  </div>
-  `
-
-  let selectedBank = null
-
-  const bankSelect = qs("bankSelect")
-  const selected = bankSelect.querySelector(".bank-selected")
-  const dropdown = bankSelect.querySelector(".bank-dropdown")
-  const searchInput = bankSelect.querySelector("#bankSearch")
-  const listContainer = bankSelect.querySelector(".bank-list")
-
-  const accInput = qs("acc")
-  const nameInput = qs("name")
-  const totalInput = qs("total")
-  const countInput = qs("count")
-  const noteInput = qs("note")
-  const createBtn = qs("createBtn")
-
-
-  /* ================= RENDER BANK ================= */
-
-  function renderBankList(filter=""){
-
-    listContainer.innerHTML=""
-
-    const filtered = BANKS.filter(b =>
-      b.name.toLowerCase().includes(filter.toLowerCase())
-    )
-
-    filtered.forEach(bank=>{
-
-      const item = document.createElement("div")
-      item.className="bank-item"
-
-      item.innerHTML = `
-        ${getBankIcon(bank)}
-        <span>${bank.name}</span>
-      `
-
-      item.onclick = ()=>{
-
-        selectedBank = bank
-
-        selected.innerHTML = `
-          <div class="bank-selected-inner">
-            ${getBankIcon(bank)}
-            <span>${bank.name}</span>
-          </div>
-        `
-
-        dropdown.classList.add("hidden")
-        validateForm()
-      }
-
-      listContainer.appendChild(item)
-    })
-  }
-
-  renderBankList()
-
-
-  /* ================= DROPDOWN ================= */
-
-  selected.onclick = ()=>{
-    dropdown.classList.toggle("hidden")
-    searchInput.focus()
-  }
-
-  searchInput.oninput = (e)=>{
-    renderBankList(e.target.value)
-  }
-
-  document.addEventListener("click",(e)=>{
-    if(!bankSelect.contains(e.target)){
-      dropdown.classList.add("hidden")
-    }
-  })
-
-
-  /* ================= FORMAT MONEY ================= */
-
-  totalInput.addEventListener("input", e=>{
-    let value = e.target.value.replace(/\D/g,"")
-
-    if(!value){
-      e.target.value=""
-      validateForm()
-      return
-    }
-
-    e.target.value = formatMoney(value)
-    validateForm()
-  })
-
-
-  /* ================= VALIDATE ================= */
-
-  function validateForm(){
-
-    const valid =
-      selectedBank &&
-      accInput.value.trim() &&
-      nameInput.value.trim() &&
-      totalInput.value.trim() &&
-      noteInput.value.trim() &&
-      Number(countInput.value) > 0
-
-    createBtn.disabled = !valid
-  }
-
-  accInput.oninput = validateForm
-  nameInput.oninput = validateForm
-  countInput.oninput = validateForm
-  noteInput.oninput = validateForm
-
-
-  /* ================= CREATE ================= */
-
-  createBtn.onclick = ()=>{
-
-    try{
-
-      createBtn.innerText="Đang tạo..."
-      createBtn.disabled=true
-
-      const totalRaw = totalInput.value.replace(/\D/g,"")
-
-      const id = createSession({
-        bin: selectedBank.bin,
-        acc: accInput.value.trim(),
-        name: nameInput.value.trim().toUpperCase(),
-        total: Number(totalRaw),
-        count: Number(countInput.value),
-        note: noteInput.value.trim()
-      })
-
-      window.location="?view="+id
-
-    }catch(err){
-
-      console.error(err)
-      showError("Có lỗi xảy ra")
-
-      createBtn.innerText="Tạo phiên"
-      createBtn.disabled=false
-    }
-  }
-
-  qs("dashboardBtn").onclick = ()=>{
-    window.location="?dashboard=1"
-  }
-}
-
-
-/* ================= VIEW ================= */
-
-export function renderView(id){
-
-  const data = getSession(id)
-
-  if(!data){
-    qs("app").innerHTML = `
-      <div class="container-lg">
-        <h2>Không tìm thấy phiên</h2>
-      </div>
-    `
-    return
-  }
-
-  const each = Math.floor(data.total / data.count)
-
-  qs("app").innerHTML = `
-  <div class="container-lg">
-
-    <h2>Quét QR</h2>
-
-    <p>Mỗi người: ${formatMoney(each)} VND</p>
-
-    <div class="qr-grid"></div>
-
-    <button id="backBtn" class="secondary-btn">
-      ← Quay lại
-    </button>
-
-  </div>
-  `
-
-  const grid = document.querySelector(".qr-grid")
-
-  for(let i=1;i<=data.count;i++){
-
-    const qrUrl = buildVietQR(
-      data.bin,
-      data.acc,
-      data.name,
-      each,
-      data.note // ✅ KHÔNG còn _1
-    )
-
-    const card = document.createElement("div")
-    card.className="qr-card"
-
-    card.innerHTML = `
-      <p>Người ${i}</p>
-      <img class="qr-img" src="${qrUrl}">
-    `
-
-    grid.appendChild(card)
-
-    card.querySelector(".qr-img").onclick = ()=>{
-      openQRModal(qrUrl)
-    }
-  }
-
-  qs("backBtn").onclick = ()=> window.history.back()
-}
-
-
-/* ================= QR MODAL ================= */
-
-function openQRModal(src){
-
-  const modal = document.createElement("div")
-  modal.className="qr-modal"
-
-  modal.innerHTML=`
-    <div class="qr-modal-box">
-      <img src="${src}">
-    </div>
-  `
-
-  modal.onclick=()=> modal.remove()
-
-  document.body.appendChild(modal)
-}
-
-
-/* ================= DASHBOARD ================= */
-
 export function renderDashboard(){
 
   const sessions = JSON.parse(localStorage.getItem("sessions") || "[]")
 
-  let totalMoney=0
-  sessions.forEach(s=> totalMoney += s.total)
+  let totalMoney = 0
+  sessions.forEach(s => totalMoney += s.total)
 
-  qs("app").innerHTML=`
-  <div class="container-lg">
+  document.getElementById("app").innerHTML = `
+  <div class="wrapper">
 
-    <h2>Dashboard</h2>
+    <!-- Navbar -->
+    <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+      <ul class="navbar-nav">
+        <li class="nav-item">
+          <a class="nav-link" data-widget="pushmenu">
+            <i class="fas fa-bars"></i>
+          </a>
+        </li>
+        <li class="nav-item">
+          <span class="nav-link">Trang chủ</span>
+        </li>
+      </ul>
+    </nav>
 
-    <div class="stat-bar">
+    <!-- Sidebar -->
+    <aside class="main-sidebar sidebar-dark-primary elevation-4">
+      <a class="brand-link">
+        <span class="brand-text font-weight-light">Admin Panel</span>
+      </a>
 
-      <div class="stat-card">
-        <h3>Tổng phiên</h3>
-        <strong>${sessions.length}</strong>
+      <div class="sidebar">
+        <div class="user-panel mt-3 pb-3 mb-3">
+          <div class="info">
+            <a class="d-block">Administrator</a>
+          </div>
+        </div>
+
+        <nav>
+          <ul class="nav nav-pills nav-sidebar flex-column">
+
+            <li class="nav-item">
+              <a class="nav-link active">
+                <i class="nav-icon fas fa-chart-pie"></i>
+                <p>Dashboard</p>
+              </a>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link">
+                <i class="nav-icon fas fa-users"></i>
+                <p>Người dùng</p>
+              </a>
+            </li>
+
+          </ul>
+        </nav>
       </div>
+    </aside>
 
-      <div class="stat-card">
-        <h3>Tổng tiền</h3>
-        <strong>${formatMoney(totalMoney)} VND</strong>
-      </div>
+    <!-- Content -->
+    <div class="content-wrapper">
+
+      <section class="content-header">
+        <div class="container-fluid">
+          <h1>Dashboard</h1>
+        </div>
+      </section>
+
+      <section class="content">
+        <div class="container-fluid">
+
+          <div class="row">
+
+            <div class="col-lg-3 col-6">
+              <div class="small-box bg-info">
+                <div class="inner">
+                  <h3>${sessions.length}</h3>
+                  <p>Tổng phiên</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-lg-3 col-6">
+              <div class="small-box bg-success">
+                <div class="inner">
+                  <h3>${totalMoney.toLocaleString()}</h3>
+                  <p>Tổng tiền</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-lg-3 col-6">
+              <div class="small-box bg-warning">
+                <div class="inner">
+                  <h3>44</h3>
+                  <p>Người dùng</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-lg-3 col-6">
+              <div class="small-box bg-danger">
+                <div class="inner">
+                  <h3>65</h3>
+                  <p>Lượt truy cập</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Doanh thu</h3>
+            </div>
+            <div class="card-body">
+              <canvas id="chart"></canvas>
+            </div>
+          </div>
+
+        </div>
+      </section>
 
     </div>
-
-    <button id="homeBtn">Về trang chính</button>
 
   </div>
   `
 
-  qs("homeBtn").onclick=()=> window.location="/"
+  // Chart
+  const ctx = document.getElementById('chart')
+
+  if(ctx){
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ['T1','T2','T3','T4'],
+        datasets: [{
+          label: 'Doanh thu',
+          data: [100,200,150,300]
+        }]
+      }
+    })
+  }
 }
