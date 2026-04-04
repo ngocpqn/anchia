@@ -9,9 +9,9 @@ font-family:'Segoe UI',Roboto,sans-serif;
 
 body:not(.sidebar-mini){
   background:linear-gradient(135deg,#0f0f0f,#1c1c1c);
-min-height:100vh;
-padding:40px 20px;
-color:#fff;
+  min-height:100vh;
+  padding:40px 20px;
+  color:#fff;
 }
 
 

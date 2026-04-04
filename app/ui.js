@@ -1,5 +1,8 @@
 export function renderDashboard(){
 
+  // reset DOM sạch
+  document.getElementById("app").innerHTML = ""
+
   const sessions = JSON.parse(localStorage.getItem("sessions") || "[]")
 
   let totalMoney = 0
@@ -18,6 +21,15 @@ export function renderDashboard(){
         </li>
         <li class="nav-item">
           <span class="nav-link">Trang chủ</span>
+        </li>
+      </ul>
+
+      <ul class="navbar-nav ml-auto">
+        <li class="nav-item">
+          <i class="fas fa-bell nav-link"></i>
+        </li>
+        <li class="nav-item">
+          <i class="fas fa-user nav-link"></i>
         </li>
       </ul>
     </nav>
@@ -51,6 +63,13 @@ export function renderDashboard(){
               <a class="nav-link">
                 <i class="nav-icon fas fa-users"></i>
                 <p>Người dùng</p>
+              </a>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link" id="backHome">
+                <i class="nav-icon fas fa-home"></i>
+                <p>Về trang chính</p>
               </a>
             </li>
 
@@ -129,7 +148,12 @@ export function renderDashboard(){
   </div>
   `
 
-  // Chart
+  // back button
+  document.getElementById("backHome").onclick = () => {
+    window.location = "/"
+  }
+
+  // chart
   const ctx = document.getElementById('chart')
 
   new Chart(ctx, {
